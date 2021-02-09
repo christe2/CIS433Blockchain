@@ -1,5 +1,6 @@
-import hashlib
+from Crypto.Hash import SHA256
 import datetime
+
 
 class DigitalMedia:
     def __init__(self, file_hash, title, date):
@@ -8,6 +9,7 @@ class DigitalMedia:
         # metadata
         self.title = title
         self.date = date
+
 
 class Block:
     def __init__(self, data):
@@ -18,12 +20,12 @@ class Block:
         self.previous_hash = 0x0
         self.hash = None
 
+    def hash_block(self):
+        data_as_bytes = self.__data_to_bytes__()
+        SHA256.new(data_as_bytes)
+
     def __str__(self):
         return str(self.index) + "Block-Hash" + str(self.hash)
-
-    def hash_block(self):
-        data_as_string = self.__data_to_sting__()
-        hashlib.sha256(data_as_string.encode()).hexdigest()
 
 
 class Blockchain:
@@ -37,4 +39,4 @@ class Blockchain:
         raise NotImplementedError
 
     def add(self, block):
-
+        raise NotImplementedError
