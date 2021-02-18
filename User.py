@@ -1,5 +1,6 @@
 import Blockchain as bc
 
+
 class User:
     def __init__(self):
         self.fname = fname
