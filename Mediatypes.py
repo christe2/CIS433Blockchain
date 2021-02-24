@@ -2,7 +2,7 @@
 Mediatypes.py
 Adam Christensen
 Riley Matthews
-Contains the different sources that can be put into the blockchain
+Contains the different media that can be put into the blockchain
 """
 
 
@@ -28,15 +28,3 @@ class Photo(Media):
 
     def get_list(self):
         return [self.file_hash, self.description, self.title, self.date, self.location, self.copyright]
-
-"""
-    def sign(self, key):
-
-
-    def create_hash(self):
-        self.hash = merkle_root([self.file_hash, self.title, self.description, self.date, self.copyright])
-        return self.hash
-
-    def check_hash(self):
-        return self.hash == self.create_hash()
-"""

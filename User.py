@@ -1,3 +1,10 @@
+"""
+User.py
+Adam Christensen
+Riley Matthews
+Contains the different User types
+"""
+
 import Blockchain as bc
 import Mediatypes as m
 import Cryptography as c

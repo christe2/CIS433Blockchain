@@ -1,3 +1,10 @@
+"""
+Blockchain.py
+Adam Christensen
+Riley Matthews
+Contains the components of the blockchain: Source, Block, Blockchain
+"""
+
 import Cryptography as c
 import Mediatypes as d
 import datetime as dt
