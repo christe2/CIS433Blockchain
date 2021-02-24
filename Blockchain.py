@@ -1,112 +1,108 @@
-from Crypto.Hash import SHA256
+import Cryptography as c
+import Mediatypes as d
 import datetime as dt
 
 
-# merkle root helper function
-def hash_list(l):
-    i = 0
-    new_list = []
-    while i < len(l):
-        if (i+1) == len(l):
-            x2 = ''
-        else:
-            x2 = l[i+1]
-        x = l[i] + x2
-        new_list.append(SHA256.new(data=bytes(x, 'utf-8')).hexdigest())
-        i += 2
-    return new_list
-
-
-# returns merkle root as type: string
-def merkle_root(lst):
-    while len(lst) != 1:
-        lst = hash_list(lst)
-    return lst[0]
-
-
-class DigitalMedia:
-    def __init__(self, file_hash, title, description, date, cc=''):
-        # hash of metadata and file_hash (should maybe be a merkle root?)
+class Source:
+    """
+    The unit of storage for our media tracking blockchain (our equivalent of a bitcoin transaction)
+    """
+    def __init__(self, media, public_key, private_key):
         self.hash = None
-        # hash of digital media file
-        self.file_hash = file_hash
-        # metadata
-        self.title = title
-        self.description = description
-        self.date = date
-        self.copyright = cc
+        self.media = media
+        self.public_key = public_key
+        self.signature = None
+        self.sign(private_key)
         self.create_hash()
 
-    def create_hash(self):
-        self.hash = merkle_root([self.file_hash, self.title, self.description, self.date, self.copyright])
-        return self.hash
+    # creates a signature from the given key
+    def sign(self, private_key):
+        self.signature = c.create_signature(self.media.get_list(), private_key)
 
-    def check_hash(self):
-        return self.hash == self.create_hash()
+    def get_list(self):
+        return self.media.get_list() + [self.public_key, self.signature]
+
+    # creates a hash of the source
+    def create_hash(self):
+        self.hash = bytes(c.merkle_root(self.get_list()).hexdigest(), 'utf-8')
+
+    def check_signature(self):
+        return c.check_signature(self.media.get_list(), self.signature, self.public_key)
+
+    # check if the hash and the signature are valid
+    def check_source(self):
+        if self.hash == bytes(c.merkle_root(self.get_list()).hexdigest(), 'utf-8'):
+            if self.check_signature():
+                return True
+            else:
+                print("Source Error. Invalid signature")
+                return False
+        else:
+            print("Source Error. Invalid hash:")
+            return False
+
+
+class Block:
+    def __init__(self, previous_block, sources):
+        self.previous_block = previous_block
+        self.index = previous_block.index + 1
+        self.max_sources = 1
+        self.sources = []
+        self.nonce = 0
+        self.timeStamp = dt.datetime.now()
+        self.previous_hash = self.previous_block.hash
+        self.hash = None
+        for source in sources:
+            self.sources.append(source)
+
+    def get_list(self):
+        lst = [bytes(self.index), bytes(self.nonce), bytes(str(self.timeStamp), 'utf-8'), self.previous_hash]
+        for source in self.sources:
+            lst.append(source.hash)
+        return lst
+
+    def add_source(self, source):
+        if len(self.sources) < self.max_sources:
+            if source.check_source():
+                self.sources.append(source)
+                return True
+            else:
+                print("Add source error. Invalid source")
+                return False
+        else:
+            print("Add source error. Block is full.")
+            return False
+
+    def check_sources(self):
+        for source in self.sources:
+            if not source.check_source():
+                print("Check source error. Not a viable Source.")
+                return False
+            else:
+                return True
+
+    def hash_block(self):
+        self.hash = bytes(c.merkle_root(self.get_list()).hexdigest(), 'utf-8')
+
+    def check_hash(self, difficulty):
+        if int(self.hash, 16) >> (64 - difficulty) * 4 == 0:
+            if self.hash == bytes(c.merkle_root(self.get_list()).hexdigest(), 'utf-8'):
+                return True
+            else:
+                return False
+        else:
+            return False
 
 
 class GenesisBlock:
     def __init__(self):
         self.previous_block = None
         self.index = 0
-        self.data = DigitalMedia('', "Genesis Block", "The first block in the blockchain", "1970/1/1")
+        self.sources = b'0'
         self.nonce = 0
-        self.timeStamp = "1970/1/1"
-        self.previous_hash = ''
-        self.hash = None
-
-    def __str__(self):
-        self.hash_block()
-        return str(self.index) + " Block-Hash: " + str(self.hash) + ' ' + str(self.previous_hash)
-
-    def check_hash(self, difficulty):
-        return int(self.hash, 16) >> (64-difficulty)*4 == 0
-
-    def hash_block(self):
-        self.hash = merkle_root([str(self.index), self.data.create_hash(), str(self.nonce), str(self.timeStamp),
-                                 self.previous_hash, str(self.previous_block)])
-
-    def mine(self, init_vec, max_nonce, difficulty):
-        self.nonce = init_vec
-        self.hash_block()
-        while int(self.hash, 16) >> (64-difficulty)*4 != 0:
-            self.nonce += 1
-            self.hash_block()
-        #print(self.nonce)
-        #print(self.hash)
-
-
-class Block:
-    def __init__(self, data, previous_block):
-        self.previous_block = previous_block
-        self.index = previous_block.index + 1
-        self.data = data
-        self.nonce = 0
-        self.timeStamp = dt.datetime.now()
-        self.previous_hash = self.previous_block.hash
-        self.hash = None
-
-    def __str__(self):
-        self.previous_hash = self.previous_block.hash
-        self.hash_block()
-        return str(self.index) + " Block-Hash: " + str(self.hash) + " Prev-Hash: " + str(self.previous_hash)
-
-    def check_hash(self, difficulty):
-        return int(self.hash, 16) >> (64 - difficulty) * 4 == 0
-
-    def hash_block(self):
-        self.previous_hash = self.previous_block.hash
-        self.hash = merkle_root([str(self.index), self.data.create_hash(), str(self.nonce), str(self.timeStamp),
-                                     self.previous_hash])  # str(self.previous_block)]
-
-    def mine(self, init_vec, max_nonce, difficulty):
-        self.nonce = init_vec
-        self.hash_block()
-        while int(self.hash, 16) >> (64 - difficulty) * 4 != 0:
-            self.nonce += 1
-            self.hash_block()
-        # print(self.nonce)
-        # print(self.hash)
+        self.timeStamp = b'1970/1/1'
+        self.previous_hash = b'0'
+        self.hash = b'0000000000'
 
 
 class Blockchain:
@@ -115,22 +111,35 @@ class Blockchain:
         self.head_block = self.genesis_block
         self.difficulty = 3  # number of 0s
         self.max_nonce = 2**32
-        self.genesis_block.mine(7831293, 0, 6)
+        self.max_sources = 1
 
-    def proof_of_work(self):
-        raise NotImplementedError
+    def mine(self, block, init_vec):
+        block.nonce = init_vec
+        block.hash_block()
+        while int(block.hash, 16) >> (64 - self.difficulty) * 4 != 0:
+            block.nonce += 1
+            block.hash_block()
+        self.head_block = block
+        print("nonce:", block.nonce)
+        print("hash:", block.hash)
 
     def check_block(self, block):
-        if block.previous_hash == self.head_block.hash and block.check_hash(self.difficulty):
-            return True
+        if block.previous_hash == self.head_block.hash:
+            if block.check_hash(self.difficulty):
+                return True
+            else:
+                print("Failed hash check")
+                return False
         else:
+            print("previous hash != head block hash")
             return False
 
     def add(self, block):
         if self.check_block(block):
             self.head_block = block
-            print("Block successfully added")
+            #print("Block successfully added")
             return True
         else:
             print("Not a viable block")
             return False
+
