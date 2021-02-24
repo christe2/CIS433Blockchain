@@ -3,6 +3,7 @@ Cryptography.py
 Adam Christensen
 Riley Matthews
 Contains the cryptographic building blocks necessary for creating a blockchain
+Libraries: Pycryptodome
 """
 
 from Crypto.Hash import SHA256
