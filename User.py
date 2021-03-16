@@ -80,6 +80,11 @@ class User:
             with open(filename, "rb") as image:
                 f = image.read()
             file_hash = bytes(c.merkle_root([f]).hexdigest(), 'utf-8')
+        elif media_type.lower() == "text":
+            with open(filename, "rt") as text:
+                f = text.read()
+                f = f.encode()
+            file_hash = bytes(c.merkle_root([f]).hexdigest(), 'utf-8')
         else:
             print("Not a valid media type")
             return False
