@@ -38,13 +38,22 @@ class User:
             print("New Block received. Block added to the Blockchain.")
 
     # allows user to send a digital media object (transaction) to their peers
-    def upload(self, media_type, filename, title, description, date, location, cc=b''):
+    def upload(self, media_type, filename, title, description, date, location=b'', cc=b''):
         if media_type.lower() == "photo":
             with open(filename, "rb") as image:
                 f = image.read()
             file_hash = bytes(c.merkle_root([f]).hexdigest(), 'utf-8')
             print("upload: ", file_hash)
             media = m.Photo(file_hash, title, description, date, location, cc)
+        elif media_type.lower() == "video":
+            # do video stuff
+            raise NotImplementedError
+        elif media_type.lower() == "text":
+            with open(filename, "rt") as text:
+                f = text.read()
+                f = f.encode()
+            file_hash = bytes(c.merkle_root([f]).hexdigest(), 'utf-8')
+            media = m.Text(file_hash, title, description, date, cc)
         else:
             print("Not a valid media type")
             return False

@@ -28,3 +28,34 @@ class Photo(Media):
 
     def get_list(self):
         return [self.file_hash, self.description, self.title, self.date, self.location, self.copyright]
+
+# TODO: implement in upload function
+class Video(Media):
+    def __init__(self, file_hash, title, description, date, location, cc=b''):
+        super().__init__(file_hash, description)
+        # metadata
+        self.title = title
+        self.date = date
+        self.location = location
+        self.copyright = cc
+
+        # video specific metadata?
+        # length?
+
+    def get_list(self):
+        return [self.file_hash, self.description, self.title, self.date, self.location, self.copyright]
+
+
+class Text(Media):
+    def __init__(self, file_hash, title, description, date, cc=b''):
+        super().__init__(file_hash, description)
+        # metadata
+        self.title = title
+        self.date = date
+        #self.location = location
+        self.copyright = cc
+
+        # text specific metadata?
+
+    def get_list(self):
+        return [self.file_hash, self.description, self.title, self.date, self.copyright]
