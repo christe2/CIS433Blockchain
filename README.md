@@ -45,5 +45,5 @@ Running `python3 test_user.py` will show the following:
 8. User2 finds the text file on the Blockchain.
 
 ## Contact Us
-Adam Christensen - christe2@uoregon.edu
+Adam Christensen - christe2@uoregon.edu \
 Riley Matthews   - riley@cs.uoregon.edu
