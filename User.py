@@ -29,8 +29,9 @@ class User:
 
     def add_source(self, source):
         self.sources.append(source)
-        #if len(self.sources) == self.blockchain.max_sources:
-            #self.create_block()
+        if len(self.sources) == self.blockchain.max_sources:
+            self.create_block()
+            self.sources = []
 
     def add_block(self, block):
         if self.blockchain.add(block):
@@ -42,30 +43,27 @@ class User:
             with open(filename, "rb") as image:
                 f = image.read()
             file_hash = bytes(c.merkle_root([f]).hexdigest(), 'utf-8')
+            print("upload: ", file_hash)
             media = m.Photo(file_hash, title, description, date, location, cc)
         else:
             print("Not a valid media type")
             return False
         source = bc.Source(media, self.public_key, self.private_key)
-        self.sources.append(source)
-        for peer in self.peers:
-            peer.add_source(source)
-        if len(self.sources) == self.blockchain.max_sources:
-            self.create_block()
+        self.add_source(source)
+        #for peer in self.peers:
+            #peer.add_source(source)
         return True
 
     def create_block(self):
         block = bc.Block(self.blockchain.head_block, self.sources)
-        # for peer in self.peers:
-        #   peer.receive_block(block)
         self.mine(block)
 
     # adds block to blockchain then sends out the block to the node's peers
     def mine(self, block):
-        self.blockchain.mine(block, 0)
-        print("Mining successful! Block added to the Blockchain.")
-        for peer in self.peers:
-            peer.add_block(block)
+        if self.blockchain.mine(block, 0):
+            print("Mining successful! Block added to the Blockchain.")
+            for peer in self.peers:
+                peer.add_block(block)
 
     # allows user to find if the given file exists on the blockchain by hashing file and searching for the hash
     def find(self, media_type, filename):

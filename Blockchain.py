@@ -126,11 +126,29 @@ class Blockchain:
         while int(block.hash, 16) >> (64 - self.difficulty) * 4 != 0:
             block.nonce += 1
             block.hash_block()
-        self.head_block = block
-        print("nonce:", block.nonce)
-        print("hash:", block.hash)
+        if self.add(block):
+            print("nonce:", block.nonce)
+            print("hash:", block.hash)
+            return True
+        else:
+            return False
+
 
     def check_block(self, block):
+        # collect the media hashes of the block to be checked
+        media_hashes = []
+        for source in block.sources:
+            media_hashes.append(source.media.file_hash)
+
+        # check to see if any of the media hashes already exist on the Blockchain
+        temp = self.head_block
+        while isinstance(temp, Block):
+            for source in temp.sources:
+                if source.media.file_hash in media_hashes:
+                    print("This file already exists!")
+                    return False
+            temp = temp.previous_block
+
         if block.previous_hash == self.head_block.hash:
             if block.check_hash(self.difficulty):
                 return True
